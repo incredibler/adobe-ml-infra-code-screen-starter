@@ -2,6 +2,7 @@ import time
 from flask import Flask, jsonify
 from game_registry import GameRegistry
 from game import TicTocGame
+import socket
 
 
 app = Flask(__name__)
@@ -25,7 +26,7 @@ def create_game():
     """
     game = TicTocGame()
     store.save_game(game)
-    return jsonify(id=game.id, turnCount=game.turnCount, status=game.status.value), 201
+    return jsonify(id=game.id, turnCount=game.turnCount, status=game.status.value, host=socket.gethostname()), 201
 
 
 @app.route("/game/<id>", methods=["GET"])
@@ -36,7 +37,7 @@ def get_game(id: str):
     if not store.is_game_exist(id):
         return "Not found (game does not exist)", 404
     game = store.load_game(id)
-    return jsonify(id=game.id, turnCount=game.turnCount, status=game.status.value)
+    return jsonify(id=game.id, turnCount=game.turnCount, status=game.status.value, host=socket.gethostname())
 
 
 @app.route("/game/<id>/<int:board_position>", methods=["GET"])
@@ -53,6 +54,7 @@ def get_game_board_position(id: str, board_position: int):
         gameId=game.id,
         boardPosition=board_position,
         value=game.get_position_value(board_position).value,
+        host=socket.gethostname()
     )
 
 
@@ -72,7 +74,7 @@ def play_game(id: str, board_position: int):
         return jsonify(error="board position occupied"), 400
     game.move(board_position)
     store.save_game(game)
-    return jsonify(gameId=game.id, boardPosition=board_position, value="x")
+    return jsonify(gameId=game.id, boardPosition=board_position, value="x", host=socket.gethostname())
 
 
 @app.route("/health", methods=["GET"])
@@ -80,4 +82,4 @@ def get_health():
     """
     GET /health
     """
-    return jsonify(uptime=int(time.time()) - start_time)
+    return jsonify(uptime=int(time.time()) - start_time, host=socket.gethostname())
